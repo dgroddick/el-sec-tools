@@ -1,10 +1,18 @@
-# SEC-TOOLS
+# EL SEC TOOLS
 
-Scripts to install some useful Security Assessment and Pentesting tools in Fedora Linux.
-This isn't meant to replace full security distributions or Spins such as Kali Linux, Parrot or the like. Simply to make installing some necessary tools onto Fedora Linux easier so I didn't have to keep doing it every time I built a new VM.
+Install some security assessment, ethical hacking and reverse engineering tools to Enterprise Linux.
+
+This isn't meant to replace full security distributions such as Kali Linux, Parrot or the like, but useful when researching in an Enterprise Linux environment.
+
+Currently tested and working on:
+- RHEL
+- CentOS Stream
+- Oracle Linux
+- Rocky Linux
+- Alma Linux
 
 ## Instructions
 
 Clone the repo and run from Bash.
-Should be run as a regular user with sudo privileges. Ideally you should have NOPASSWD with sudo for a non-interactive installation.
-
+Should be run as a regular user with sudo privileges.
+Ideally you will be installing this on a 'Server with GUI' or Workstation installation of Enterprise Linux as it does install some GUI tools. 
