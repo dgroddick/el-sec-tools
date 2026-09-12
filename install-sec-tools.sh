@@ -42,8 +42,8 @@ EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.no
 
 ## Core repo packages
 EL_REPO_GROUPS=("security-tools" "development" "rpm-development-tools")
-DEV_TOOLS=("python3-devel" "python3-pip" "kernel-devel" "golang" "rust" "cargo" "ruby-devel")
-NET_TOOLS=("tcpdump" "nmap" "netcat" "samba-client" "nfs-utils" "hping3" "fping")
+DEV_TOOLS=("python3-devel" "python3-pip" "kernel-devel" "golang" "rust" "cargo" "ruby-devel" "nasm")
+NET_TOOLS=("tcpdump" "nmap" "netcat" "samba-client" "nfs-utils" "hping3" "fping" "curl")
 MALWARE_TOOLS=("clamav" "clamav-freshclam" "rkhunter" "yara")
 BINARY_TOOLS=("radare2")
 GUI_TOOLS=("wireshark")
@@ -62,6 +62,9 @@ NUCLEI=github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 ASSETFINDER=github.com/tomnomnom/assetfinder@latest
 AMASS=github.com/owasp-amass/amass/v4/...@master
 HYDRA=https://github.com/vanhauser-thc/thc-hydra.git
+
+FLOSS=https://github.com/mandiant/flare-floss/releases/download/v3.1.1/floss-v3.1.1-linux.zip
+CAPA=https://github.com/mandiant/capa/releases/download/v9.4.0/capa-v9.4.0-linux.zip
 
 SUBLIST3R=https://github.com/aboul3la/Sublist3r
 
@@ -238,7 +241,27 @@ maldet_install() {
     fi
 }
 
-hydra_install() {
+mandiant_tools_install() {
+    echo -e "${greenplus} Installing FLOSS ${reset}"
+    if [ ! -d "${HOME}/tools" ]; then
+        mkdir "${HOME}/tools/"
+    fi
+
+    if ! [[ -f "${HOME}/tools/floss" ]]; then
+        wget -P "${HOME}/tools/" "${FLOSS}" && cd "${HOME}/tools/" && unzip floss-v3.1.1-linux.zip && rm floss-v3.1.1-linux.zip
+    fi
+
+    echo -e "${greenplus} Installing CAPA ${reset}"
+    if [ ! -d "${HOME}/tools" ]; then
+        mkdir "${HOME}/tools/"
+    fi
+
+    if ! [[ -f "${HOME}/tools/capa" ]]; then
+        wget -P "${HOME}/tools/" "${CAPA}" && cd "${HOME}/tools/" && unzip capa-v9.4.0-linux.zip && rm capa-v9.4.0-linux.zip
+    fi
+}
+
+password_tools_install() {
     echo -e "${greenplus} Installing Hydra ${reset}"
     HYDRA_PATH=/usr/local/bin/hydra
     if [ $(which hydra) ]; then
@@ -257,6 +280,9 @@ hydra_install() {
             cd "${HOME}/src/thc-hydra" && ./configure && make && sudo make install
         fi
     fi
+
+    echo -e "${greenplus} Installing John the Ripper ${reset}"
+    flatpak install -y flathub com.openwall.John
 }
 
 reversing_tools_install() {
@@ -272,9 +298,23 @@ web_proxy_install() {
 
 nessus_install() {
     podman pull tenable/nessus:latest-oracle
-    podman run -d -p 8834:8834 tenable/nessus:latest-oracle
+
+    if ss -tuln | grep -q ":8834 "; then
+        echo "Nessus container is running"
+    else
+        podman run -d -p 8834:8834 tenable/nessus:latest-oracle
+    fi
 }
 
+cyberchef_install() {
+    podman pull ghcr.io/gchq/cyberchef:latest
+
+    if ss -tuln | grep -q ":8080 "; then
+        echo "CyberChef is running"
+    else
+        podman run -d -p 8080:8080 ghcr.io/gchq/cyberchef:latest
+    fi
+}
 
 echo "EL SEC TOOLS"
 echo "==========="
@@ -289,10 +329,12 @@ seclists_install
 recon_tools_install
 exploit_tools_install
 maldet_install
-hydra_install
+mandiant_tools_install
+password_tools_install
 reversing_tools_install
 web_proxy_install
 privesc_tools_install
 nessus_install
+cyberchef_install
 
 echo -e "${greenplus} All done! Happy Hacking!! ${reset}"
