@@ -12,9 +12,6 @@ set -e
 ARCH=$(uname -m)
 VERSION='0.1'
 
-# Logged in user
-USER=$(logname)
-
 # terminal colours
 red=$'\e[1;31m'
 green=$'\e[1;32m'
@@ -32,8 +29,17 @@ if [ -f /etc/os-release ]; then
     OS_ID=$(. /etc/os-release && echo "$ID")
     OS_VERSION=$(. /etc/os-release && echo "${VERSION_ID%%.*}")
 else
-    echo -e "\n${redminus} It is unlikely that you are running a supported Operating System.\n"
-    return 1
+    echo -e "\n${redminus} It is unlikely that you are running a supported Operating System.\n ${reset}"
+    exit 1
+fi
+
+if [[ "${OS_ID}" == "fedora" ]]; then
+    echo -e "\n${redminus} Installation does not support Fedora.\n ${reset}"
+    exit 1
+fi
+
+if [ ! -d "${HOME}/tools" ]; then
+    mkdir "${HOME}/tools/"
 fi
 
 # REPOS
@@ -65,6 +71,7 @@ HYDRA=https://github.com/vanhauser-thc/thc-hydra.git
 
 FLOSS=https://github.com/mandiant/flare-floss/releases/download/v3.1.1/floss-v3.1.1-linux.zip
 CAPA=https://github.com/mandiant/capa/releases/download/v9.4.0/capa-v9.4.0-linux.zip
+GORESYM=https://github.com/mandiant/GoReSym/releases/download/v3.4/GoReSym-linux.zip
 
 SUBLIST3R=https://github.com/aboul3la/Sublist3r
 
@@ -79,7 +86,7 @@ show_usage() {
 }
 
 update_system() {
-    echo -e "${greenplus} Updating system"
+    echo -e "${greenplus} Updating system ${reset}"
     sudo dnf clean all && sudo dnf -y upgrade
 }
 
@@ -98,20 +105,14 @@ enable_repos() {
     sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 }
 
-
 base_install() {
     echo -e "${greenplus} Installing required packages ${reset}"
     sudo dnf group install -y "${EL_REPO_GROUPS[@]}"
     sudo dnf install -y "${DEV_TOOLS[@]}" "${NET_TOOLS[@]}" "${CLEANING_TOOLS[@]}" "${BINARY_TOOLS[@]}" "${GUI_TOOLS[@]}"
 }
 
-
 recon_tools_install() {
     echo -e "${greenplus} Installing extra recon and scanning tools... ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
-
     echo "export PATH=${PATH}:${HOME}/go/bin" >> ${HOME}/.profile && source ${HOME}/.profile
 
     echo -e "${greenplus} Installing Gobuster ${reset}"
@@ -168,9 +169,6 @@ recon_tools_install() {
 
 seclists_install() {
     echo -e "${greenplus} Installing Seclists ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
 
     if [ -d "${HOME}/tools/SecLists" ]; then
         echo -e "\nSeclists already installed\n"
@@ -181,9 +179,6 @@ seclists_install() {
 
 privesc_tools_install() {
     echo -e "${greenplus} Installing Privilege Escalation tools ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
 
     if ! [[ -f "${HOME}/tools/linpeas.sh" ]]; then
         wget -P "${HOME}/tools/" "${LINPEAS}" && chmod +x "${HOME}/tools/linpeas.sh"
@@ -204,9 +199,6 @@ privesc_tools_install() {
 
 exploit_tools_install() {
     echo -e "${greenplus} Installing Atomic Red Team ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
 
     if [ -d "${HOME}/tools/atomic-red-team" ]; then
         echo -e "\nAtomic Red Team already installed\n"
@@ -243,21 +235,21 @@ maldet_install() {
 
 mandiant_tools_install() {
     echo -e "${greenplus} Installing FLOSS ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
 
     if ! [[ -f "${HOME}/tools/floss" ]]; then
         wget -P "${HOME}/tools/" "${FLOSS}" && cd "${HOME}/tools/" && unzip floss-v3.1.1-linux.zip && rm floss-v3.1.1-linux.zip
     fi
 
     echo -e "${greenplus} Installing CAPA ${reset}"
-    if [ ! -d "${HOME}/tools" ]; then
-        mkdir "${HOME}/tools/"
-    fi
 
     if ! [[ -f "${HOME}/tools/capa" ]]; then
         wget -P "${HOME}/tools/" "${CAPA}" && cd "${HOME}/tools/" && unzip capa-v9.4.0-linux.zip && rm capa-v9.4.0-linux.zip
+    fi
+
+    echo -e "${greenplus} Installing GoReSym ${reset}"
+ 
+    if ! [[ -f "${HOME}/tools/GoReSym" ]]; then
+        wget -P "${HOME}/tools/" "${GORESYM}" && cd "${HOME}/tools/" && unzip GoReSym-linux.zip && rm GoReSym-linux.zip
     fi
 }
 
@@ -300,7 +292,7 @@ nessus_install() {
     podman pull tenable/nessus:latest-oracle
 
     if ss -tuln | grep -q ":8834 "; then
-        echo "Nessus container is running"
+        echo "${greenplus} Nessus container is running ${reset}"
     else
         podman run -d -p 8834:8834 tenable/nessus:latest-oracle
     fi
@@ -310,7 +302,7 @@ cyberchef_install() {
     podman pull ghcr.io/gchq/cyberchef:latest
 
     if ss -tuln | grep -q ":8080 "; then
-        echo "CyberChef is running"
+        echo "${greenplus}  CyberChef is running ${reset}"
     else
         podman run -d -p 8080:8080 ghcr.io/gchq/cyberchef:latest
     fi
@@ -336,5 +328,8 @@ web_proxy_install
 privesc_tools_install
 nessus_install
 cyberchef_install
+
+echo 'export PATH="$PATH:$HOME/tools/"' >> $HOME/.bash_profile
+source $HOME/.bash_profile
 
 echo -e "${greenplus} All done! Happy Hacking!! ${reset}"
