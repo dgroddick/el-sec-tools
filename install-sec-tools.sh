@@ -26,6 +26,16 @@ greenplus='\e[1;33m[++]\e[0m'
 greenminus='\e[1;33m[--]\e[0m'
 redminus='\e[1;31m[--]\e[0m'
 
+# Detect OS
+if [ -f /etc/os-release ]; then
+    OS_NAME=$(grep '^NAME' /etc/os-release | awk -F= '{ print $2 }')
+    OS_ID=$(. /etc/os-release && echo "$ID")
+    OS_VERSION=$(. /etc/os-release && echo "${VERSION_ID%%.*}")
+else
+    echo -e "\n${redminus} It is unlikely that you are running a supported Operating System.\n"
+    return 1
+fi
+
 # REPOS
 CRB="codeready-builder-for-rhel-${OS_VERSION}-$(arch)-rpms"
 EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.noarch.rpm"
@@ -65,22 +75,10 @@ show_usage() {
     echo -e 'Usage: ./install-sec-tools.sh\n'
 }
 
-detect_os () {
-    if [ -f /etc/os-release ]; then
-        OS_NAME=$(grep '^NAME' /etc/os-release | awk -F= '{ print $2 }')
-        OS_ID=$(. /etc/os-release && echo "$ID")
-        OS_VERSION=$(. /etc/os-release && echo "${VERSION_ID%%.*}")
-    else
-        echo -e "\n${redminus} It is unlikely that you are running a supported Operating System.\n"
-        return 1
-    fi
-}
-
 update_system() {
     echo -e "${greenplus} Updating system"
     sudo dnf clean all && sudo dnf -y upgrade
 }
-
 
 enable_repos() {
     if [[ "${OS_ID}" == "rhel" ]]; then
@@ -284,7 +282,6 @@ echo "A toolkit to configure an Enterprise Linux Security Research System."
 
 echo "Starting..."
 
-detect_os
 enable_repos
 update_system
 base_install
