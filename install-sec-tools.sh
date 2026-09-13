@@ -52,7 +52,7 @@ DEV_TOOLS=("python3-devel" "python3-pip" "kernel-devel" "golang" "rust" "cargo" 
 NET_TOOLS=("tcpdump" "nmap" "netcat" "samba-client" "nfs-utils" "hping3" "fping" "curl")
 MALWARE_TOOLS=("clamav" "clamav-freshclam" "rkhunter" "yara")
 BINARY_TOOLS=("radare2")
-GUI_TOOLS=("wireshark")
+GUI_TOOLS=("wireshark" "scap-workbench")
 
 # Other stuff
 SECLISTS=https://github.com/danielmiessler/SecLists.git
