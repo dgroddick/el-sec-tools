@@ -34,7 +34,7 @@ else
 fi
 
 if [[ "${OS_ID}" == "fedora" ]]; then
-    echo -e "\n${redminus} Installation does not support Fedora.\n ${reset}"
+    echo -e "\n${redminus} Installation doesn't support Fedora.\n ${reset}"
     exit 1
 fi
 
@@ -46,7 +46,7 @@ fi
 CRB="codeready-builder-for-rhel-${OS_VERSION}-$(arch)-rpms"
 EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.noarch.rpm"
 
-## Core repo packages
+## Distro packages
 EL_REPO_GROUPS=("security-tools" "development" "rpm-development-tools")
 DEV_TOOLS=("python3-devel" "python3-pip" "kernel-devel" "golang" "rust" "cargo" "ruby-devel" "nasm")
 NET_TOOLS=("tcpdump" "nmap" "netcat" "samba-client" "nfs-utils" "hping3" "fping" "curl")
@@ -54,10 +54,9 @@ MALWARE_TOOLS=("clamav" "clamav-freshclam" "rkhunter" "yara")
 BINARY_TOOLS=("radare2")
 GUI_TOOLS=("wireshark")
 
-## SecLists
+# Other stuff
 SECLISTS=https://github.com/danielmiessler/SecLists.git
 
-## Extra tools
 ENUM4LINUX=https://gitlab.com/kalilinux/packages/enum4linux/-/raw/kali/master/enum4linux.pl
 UNIXPRIVESC=https://raw.githubusercontent.com/pentestmonkey/unix-privesc-check/refs/heads/1_x/unix-privesc-check
 PSPY=https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64
@@ -67,14 +66,13 @@ GOBUSTER=github.com/OJ/gobuster/v3@latest
 NUCLEI=github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 ASSETFINDER=github.com/tomnomnom/assetfinder@latest
 AMASS=github.com/owasp-amass/amass/v4/...@master
+SUBLIST3R=https://github.com/aboul3la/Sublist3r
+
 HYDRA=https://github.com/vanhauser-thc/thc-hydra.git
 
 FLOSS=https://github.com/mandiant/flare-floss/releases/download/v3.1.1/floss-v3.1.1-linux.zip
 CAPA=https://github.com/mandiant/capa/releases/download/v9.4.0/capa-v9.4.0-linux.zip
 GORESYM=https://github.com/mandiant/GoReSym/releases/download/v3.4/GoReSym-linux.zip
-
-SUBLIST3R=https://github.com/aboul3la/Sublist3r
-
 MALDET=https://github.com/rfxn/linux-malware-detect.git
 
 ATOMIC=https://github.com/redcanaryco/atomic-red-team.git
@@ -108,7 +106,7 @@ enable_repos() {
 base_install() {
     echo -e "${greenplus} Installing required packages ${reset}"
     sudo dnf group install -y "${EL_REPO_GROUPS[@]}"
-    sudo dnf install -y "${DEV_TOOLS[@]}" "${NET_TOOLS[@]}" "${CLEANING_TOOLS[@]}" "${BINARY_TOOLS[@]}" "${GUI_TOOLS[@]}"
+    sudo dnf install -y "${DEV_TOOLS[@]}" "${NET_TOOLS[@]}" "${MALWARE_TOOLS[@]}" "${BINARY_TOOLS[@]}" "${GUI_TOOLS[@]}"
 }
 
 recon_tools_install() {
@@ -292,7 +290,7 @@ nessus_install() {
     podman pull tenable/nessus:latest-oracle
 
     if ss -tuln | grep -q ":8834 "; then
-        echo "${greenplus} Nessus container is running ${reset}"
+        echo -e "${greenplus} Nessus container is running ${reset}"
     else
         podman run -d -p 8834:8834 tenable/nessus:latest-oracle
     fi
@@ -302,7 +300,7 @@ cyberchef_install() {
     podman pull ghcr.io/gchq/cyberchef:latest
 
     if ss -tuln | grep -q ":8080 "; then
-        echo "${greenplus}  CyberChef is running ${reset}"
+        echo -e "${greenplus}  CyberChef is running ${reset}"
     else
         podman run -d -p 8080:8080 ghcr.io/gchq/cyberchef:latest
     fi
@@ -317,15 +315,15 @@ echo "Starting..."
 enable_repos
 update_system
 base_install
-seclists_install
 recon_tools_install
+seclists_install
 exploit_tools_install
+privesc_tools_install
 maldet_install
 mandiant_tools_install
 password_tools_install
 reversing_tools_install
 web_proxy_install
-privesc_tools_install
 nessus_install
 cyberchef_install
 
